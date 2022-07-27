@@ -1,9 +1,13 @@
-use std::{ops::{Add, Sub, Neg, AddAssign, SubAssign, MulAssign, DivAssign, Mul, Div}, fmt::{Display, self}, cell::UnsafeCell};
+use std::{
+    cell::UnsafeCell,
+    fmt::{self, Display},
+    ops::{
+        Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
+    },
+};
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Z64<const P: u64> (
-    u64
-);
+pub struct Z64<const P: u64>(u64);
 
 impl<const P: u64> Z64<P> {
     pub fn new(z: i64) -> Self {
@@ -31,14 +35,12 @@ impl<const P: u64> Z64<P> {
         // the problem is that rust 1.62 always returns the same instance,
         // even for different values for P
         thread_local!(static INFO: UnsafeCell<Z64Info> = Default::default());
-        INFO.with(|f| {
-            unsafe{
-                let info = f.get();
-                if (*info).p != P {
-                    *info = Z64Info::new(P);
-                };
-                *info
-            }
+        INFO.with(|f| unsafe {
+            let info = f.get();
+            if (*info).p != P {
+                *info = Z64Info::new(P);
+            };
+            *info
         })
     }
 
@@ -117,25 +119,25 @@ impl<const P: u64> Display for Z64<P> {
     }
 }
 
-impl<const P: u64>  AddAssign for Z64<P> {
+impl<const P: u64> AddAssign for Z64<P> {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs;
     }
 }
 
-impl<const P: u64>  SubAssign for Z64<P> {
+impl<const P: u64> SubAssign for Z64<P> {
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs;
     }
 }
 
-impl<const P: u64>  MulAssign for Z64<P> {
+impl<const P: u64> MulAssign for Z64<P> {
     fn mul_assign(&mut self, rhs: Self) {
         *self = *self * rhs;
     }
 }
 
-impl<const P: u64>  DivAssign for Z64<P> {
+impl<const P: u64> DivAssign for Z64<P> {
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;
     }
@@ -157,7 +159,8 @@ impl<const P: u64> Sub for Z64<P> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        let res = correct_deficit(self.0 as i64 - rhs.0 as i64, Self::modulus());
+        let res =
+            correct_deficit(self.0 as i64 - rhs.0 as i64, Self::modulus());
         debug_assert!(res >= 0);
         let res = res as u64;
         debug_assert!(res < Self::modulus());
@@ -194,7 +197,7 @@ fn mul_mod(a: u64, b: u64, n: u64, ninv: SpInverse64) -> u64 {
         a,
         (b as i64) << ninv.shamt,
         ((n as i64) << ninv.shamt) as u64,
-        ninv.inv
+        ninv.inv,
     ) >> ninv.shamt;
     res as u64
 }
@@ -261,7 +264,10 @@ fn extended_gcd(a: u64, b: u64) -> ExtendedGCDResult {
         (old_s, s) = (s, old_s - quotient as i64 * s);
         (old_t, t) = (t, old_t - quotient as i64 * t);
     }
-    ExtendedGCDResult { gcd: old_r, bezout: [old_s, old_t] }
+    ExtendedGCDResult {
+        gcd: old_r,
+        bezout: [old_s, old_t],
+    }
 }
 
 const SP_NBITS: u32 = u64::BITS - 4;
@@ -285,7 +291,7 @@ impl Z64Info {
 
         let p_inv = prep_mul_mod(p);
         let red_struct = prep_rem(p);
-        Self{
+        Self {
             p,
             p_inv,
             red_struct,
@@ -296,7 +302,7 @@ impl Z64Info {
 fn prep_mul_mod(p: u64) -> SpInverse64 {
     let shamt = p.leading_zeros() - (u64::BITS - SP_NBITS);
     let inv = normalized_prep_mul_mod(p << shamt);
-    SpInverse64{inv, shamt}
+    SpInverse64 { inv, shamt }
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -325,7 +331,7 @@ fn correct_excess_quo(q: &mut u64, a: i64, n: i64) -> i64 {
     }
 }
 
-trait SignMask{
+trait SignMask {
     fn sign_mask(self) -> i64;
 }
 
@@ -352,8 +358,9 @@ fn normalized_prep_mul_mod(n: u64) -> u64 {
 
     // NOTE: this is an initial approximation
     //       the true quotient is <= 2^SP_NBITS
-    let init_quot_approx =
-           ((1u64 << (SP_NBITS - 1)) as f64 * (1u64 << SP_NBITS) as f64 * ninv) as u64;
+    let init_quot_approx = ((1u64 << (SP_NBITS - 1)) as f64
+        * (1u64 << SP_NBITS) as f64
+        * ninv) as u64;
 
     let wot = 1u128 << (2 * SP_NBITS - 1);
     let approx_rem = wot.wrapping_sub(n as u128 * init_quot_approx as u128);
@@ -366,13 +373,14 @@ fn normalized_prep_mul_mod(n: u64) -> u64 {
     // signed -> float conversions
 
     let approx_rem_low = approx_rem as u64;
-    let approx_rem_high = (approx_rem >> u64::BITS) as u64
-        + (approx_rem_low >> (u64::BITS - 1));
+    let approx_rem_high =
+        (approx_rem >> u64::BITS) as u64 + (approx_rem_low >> (u64::BITS - 1));
 
     let approx_rem_low = approx_rem_low as i64;
     let approx_rem_high = approx_rem_high as i64;
 
-    let bpl = (1u64 << SP_NBITS) as f64 * (1u64 << (u64::BITS - SP_NBITS)) as f64;
+    let bpl =
+        (1u64 << SP_NBITS) as f64 * (1u64 << (u64::BITS - SP_NBITS)) as f64;
 
     let fr = approx_rem_low as f64 + approx_rem_high as f64 * bpl;
 
@@ -394,7 +402,8 @@ fn normalized_prep_mul_mod(n: u64) -> u64 {
 
     let approx_rem = approx_rem_low.wrapping_sub(sub);
 
-    q1 += (1 + approx_rem.sign_mask() + approx_rem.wrapping_sub(n).sign_mask()) as u64;
+    q1 += (1 + approx_rem.sign_mask() + approx_rem.wrapping_sub(n).sign_mask())
+        as u64;
 
     (init_quot_approx << (PRE_SHIFT2 - 2 * SP_NBITS + 1)).wrapping_add(q1)
 
@@ -405,34 +414,30 @@ fn normalized_prep_mul_mod(n: u64) -> u64 {
 mod tests {
 
     use once_cell::sync::Lazy;
-    use rand::{SeedableRng, Rng};
+    use rand::{Rng, SeedableRng};
 
     use super::*;
 
-    const PRIMES: [u64; 3] = [
-        3,
-        443619635352171979,
-        1152921504606846883,
-    ];
+    const PRIMES: [u64; 3] = [3, 443619635352171979, 1152921504606846883];
 
     #[test]
     fn z64_info() {
-        let tst = Z64::<{PRIMES[0]}>::info();
-        assert_eq!(Z64::<{PRIMES[0]}>::modulus(), PRIMES[0]);
+        let tst = Z64::<{ PRIMES[0] }>::info();
+        assert_eq!(Z64::<{ PRIMES[0] }>::modulus(), PRIMES[0]);
         assert_eq!(tst.p_inv.inv, 6148914691236517205);
         assert_eq!(tst.p_inv.shamt, 58);
         assert_eq!(tst.red_struct.ninv, 6148914691236517205);
         assert_eq!(tst.red_struct.sgn, 2);
 
-        let tst = Z64::<{PRIMES[1]}>::info();
-        assert_eq!(Z64::<{PRIMES[1]}>::modulus(), PRIMES[1]);
+        let tst = Z64::<{ PRIMES[1] }>::info();
+        assert_eq!(Z64::<{ PRIMES[1] }>::modulus(), PRIMES[1]);
         assert_eq!(tst.p_inv.inv, 5992647258409536587);
         assert_eq!(tst.p_inv.shamt, 1);
         assert_eq!(tst.red_struct.ninv, 41);
         assert_eq!(tst.red_struct.sgn, 350979329811336228);
 
-        let tst = Z64::<{PRIMES[2]}>::info();
-        assert_eq!(Z64::<{PRIMES[2]}>::modulus(), PRIMES[2]);
+        let tst = Z64::<{ PRIMES[2] }>::info();
+        assert_eq!(Z64::<{ PRIMES[2] }>::modulus(), PRIMES[2]);
         assert_eq!(tst.p_inv.inv, 4611686018427388276);
         assert_eq!(tst.p_inv.shamt, 0);
         assert_eq!(tst.red_struct.ninv, 16);
@@ -478,19 +483,19 @@ mod tests {
         // separate for loops are faster because we don't have to recalculate
         // the thread local Z64Info in each iteration
         for pt in *POINTS {
-            let z: Z64<{PRIMES[0]}> = pt.into();
+            let z: Z64<{ PRIMES[0] }> = pt.into();
             let z: i64 = z.into();
             assert_eq!(z, pt.rem_euclid(PRIMES[0] as i64));
         }
 
         for pt in *POINTS {
-            let z: Z64<{PRIMES[1]}> = pt.into();
+            let z: Z64<{ PRIMES[1] }> = pt.into();
             let z: i64 = z.into();
             assert_eq!(z, pt.rem_euclid(PRIMES[1] as i64));
         }
 
         for pt in *POINTS {
-            let z: Z64<{PRIMES[2]}> = pt.into();
+            let z: Z64<{ PRIMES[2] }> = pt.into();
             let z: i64 = z.into();
             assert_eq!(z, pt.rem_euclid(PRIMES[2] as i64));
         }
@@ -499,10 +504,10 @@ mod tests {
     #[test]
     fn tst_add() {
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[0]}> = pt1.into();
+            let z1: Z64<{ PRIMES[0] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[0]}> = pt2.into();
+                let z2: Z64<{ PRIMES[0] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let sum1: i64 = (z1 + z2).into();
                 let sum2 = (pt1 + pt2).rem_euclid(PRIMES[0] as i128) as i64;
@@ -511,10 +516,10 @@ mod tests {
         }
 
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[1]}> = pt1.into();
+            let z1: Z64<{ PRIMES[1] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[1]}> = pt2.into();
+                let z2: Z64<{ PRIMES[1] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let sum1: i64 = (z1 + z2).into();
                 let sum2 = (pt1 + pt2).rem_euclid(PRIMES[1] as i128) as i64;
@@ -523,10 +528,10 @@ mod tests {
         }
 
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[2]}> = pt1.into();
+            let z1: Z64<{ PRIMES[2] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[2]}> = pt2.into();
+                let z2: Z64<{ PRIMES[2] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let sum1: i64 = (z1 + z2).into();
                 let sum2 = (pt1 + pt2).rem_euclid(PRIMES[2] as i128) as i64;
@@ -538,10 +543,10 @@ mod tests {
     #[test]
     fn tst_sub() {
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[0]}> = pt1.into();
+            let z1: Z64<{ PRIMES[0] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[0]}> = pt2.into();
+                let z2: Z64<{ PRIMES[0] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let sum1: i64 = (z1 - z2).into();
                 let sum2 = (pt1 - pt2).rem_euclid(PRIMES[0] as i128) as i64;
@@ -550,10 +555,10 @@ mod tests {
         }
 
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[1]}> = pt1.into();
+            let z1: Z64<{ PRIMES[1] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[1]}> = pt2.into();
+                let z2: Z64<{ PRIMES[1] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let sum1: i64 = (z1 - z2).into();
                 let sum2 = (pt1 - pt2).rem_euclid(PRIMES[1] as i128) as i64;
@@ -562,10 +567,10 @@ mod tests {
         }
 
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[2]}> = pt1.into();
+            let z1: Z64<{ PRIMES[2] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[2]}> = pt2.into();
+                let z2: Z64<{ PRIMES[2] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let sum1: i64 = (z1 - z2).into();
                 let sum2 = (pt1 - pt2).rem_euclid(PRIMES[2] as i128) as i64;
@@ -577,10 +582,10 @@ mod tests {
     #[test]
     fn tst_mul() {
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[0]}> = pt1.into();
+            let z1: Z64<{ PRIMES[0] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[0]}> = pt2.into();
+                let z2: Z64<{ PRIMES[0] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let prod1: i64 = (z1 * z2).into();
                 let prod2 = (pt1 * pt2).rem_euclid(PRIMES[0] as i128) as i64;
@@ -589,10 +594,10 @@ mod tests {
         }
 
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[1]}> = pt1.into();
+            let z1: Z64<{ PRIMES[1] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[1]}> = pt2.into();
+                let z2: Z64<{ PRIMES[1] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let prod1: i64 = (z1 * z2).into();
                 let prod2 = (pt1 * pt2).rem_euclid(PRIMES[1] as i128) as i64;
@@ -601,10 +606,10 @@ mod tests {
         }
 
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[2]}> = pt1.into();
+            let z1: Z64<{ PRIMES[2] }> = pt1.into();
             let pt1 = pt1 as i128;
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[2]}> = pt2.into();
+                let z2: Z64<{ PRIMES[2] }> = pt2.into();
                 let pt2 = pt2 as i128;
                 let prod1: i64 = (z1 * z2).into();
                 let prod2 = (pt1 * pt2).rem_euclid(PRIMES[2] as i128) as i64;
@@ -616,9 +621,9 @@ mod tests {
     #[test]
     fn tst_div() {
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[0]}> = pt1.into();
+            let z1: Z64<{ PRIMES[0] }> = pt1.into();
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[0]}> = pt2.into();
+                let z2: Z64<{ PRIMES[0] }> = pt2.into();
                 if i64::from(z2) == 0 {
                     continue;
                 }
@@ -628,9 +633,9 @@ mod tests {
         }
 
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[1]}> = pt1.into();
+            let z1: Z64<{ PRIMES[1] }> = pt1.into();
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[1]}> = pt2.into();
+                let z2: Z64<{ PRIMES[1] }> = pt2.into();
                 if i64::from(z2) == 0 {
                     continue;
                 }
@@ -640,9 +645,9 @@ mod tests {
         }
 
         for pt1 in *POINTS {
-            let z1: Z64<{PRIMES[2]}> = pt1.into();
+            let z1: Z64<{ PRIMES[2] }> = pt1.into();
             for pt2 in *POINTS {
-                let z2: Z64<{PRIMES[2]}> = pt2.into();
+                let z2: Z64<{ PRIMES[2] }> = pt2.into();
                 if i64::from(z2) == 0 {
                     continue;
                 }
