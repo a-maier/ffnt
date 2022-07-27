@@ -187,6 +187,7 @@ impl<const P: u64> Mul for Z64<P> {
 impl<const P: u64> Div for Z64<P> {
     type Output = Self;
 
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn div(self, rhs: Self) -> Self::Output {
         self * rhs.inv()
     }
