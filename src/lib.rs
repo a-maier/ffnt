@@ -267,11 +267,6 @@ fn extended_gcd(a: u64, b: u64) -> ExtendedGCDResult {
 const SP_NBITS: u32 = u64::BITS - 4;
 const PRE_SHIFT2: u32 = 2 * SP_NBITS + 2;
 
-// // NTL: absolute maximum root bound for FFT primes
-// const FFT_MAX_ROOT_BND: u32 = SP_NBITS - 2;
-
-// const FFT_MAX_ROOT: u32 = 25;
-
 const fn used_bits(z: u64) -> u32 {
     u64::BITS - z.leading_zeros()
 }
@@ -281,7 +276,6 @@ struct Z64Info {
     p: u64,
     p_inv: SpInverse64,
     red_struct: ReduceStruct,
-    u128_red_struct: U128ReduceStruct,
 }
 
 impl Z64Info {
@@ -291,13 +285,10 @@ impl Z64Info {
 
         let p_inv = prep_mul_mod(p);
         let red_struct = prep_rem(p);
-        let u128_red_struct = U128ReduceStruct::new(p);
-        // TODO: ZZ_red_struct?
         Self{
             p,
             p_inv,
             red_struct,
-            u128_red_struct
         }
     }
 }
@@ -323,20 +314,6 @@ fn prep_rem(p: u64) -> ReduceStruct {
     let _ = correct_excess_quo(&mut q, 2 * r as i64, p as i64);
 
     ReduceStruct { ninv: q, sgn: r }
-}
-
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-struct U128ReduceStruct {
-    inv: u64,
-    nbits: u32,
-}
-
-impl U128ReduceStruct {
-    fn new(n: u64) -> Self {
-        let nbits = used_bits(n);
-        let inv = ((1u128 << (nbits + u64::BITS)) - 1) / (n as u128);
-        U128ReduceStruct { inv: inv as u64, nbits }
-    }
 }
 
 fn correct_excess_quo(q: &mut u64, a: i64, n: i64) -> i64 {
@@ -446,9 +423,6 @@ mod tests {
         assert_eq!(tst.p_inv.shamt, 58);
         assert_eq!(tst.red_struct.ninv, 6148914691236517205);
         assert_eq!(tst.red_struct.sgn, 2);
-        assert_eq!(tst.u128_red_struct.inv, 6148914691236517205);
-        assert_eq!(tst.u128_red_struct.nbits, 2);
-        // TODO: ZZ_red_struct
 
         let tst = Z64::<{PRIMES[1]}>::info();
         assert_eq!(Z64::<{PRIMES[1]}>::modulus(), PRIMES[1]);
@@ -456,8 +430,6 @@ mod tests {
         assert_eq!(tst.p_inv.shamt, 1);
         assert_eq!(tst.red_struct.ninv, 41);
         assert_eq!(tst.red_struct.sgn, 350979329811336228);
-        assert_eq!(tst.u128_red_struct.inv, 5523844959928594733);
-        assert_eq!(tst.u128_red_struct.nbits, 59);
 
         let tst = Z64::<{PRIMES[2]}>::info();
         assert_eq!(Z64::<{PRIMES[2]}>::modulus(), PRIMES[2]);
@@ -465,8 +437,6 @@ mod tests {
         assert_eq!(tst.p_inv.shamt, 0);
         assert_eq!(tst.red_struct.ninv, 16);
         assert_eq!(tst.red_struct.sgn, 744);
-        assert_eq!(tst.u128_red_struct.inv, 1488);
-        assert_eq!(tst.u128_red_struct.nbits, 60);
     }
 
     #[test]
