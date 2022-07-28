@@ -1,5 +1,4 @@
 use std::{
-    cell::UnsafeCell,
     fmt::{self, Display},
     ops::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
@@ -10,6 +9,8 @@ use std::{
 pub struct Z64<const P: u64>(u64);
 
 impl<const P: u64> Z64<P> {
+    const INFO: Z64Info = Z64Info::new(P);
+
     pub fn new(z: i64) -> Self {
         let res = remi(z, P, Self::info().red_struct);
         debug_assert!(res >= 0);
@@ -34,18 +35,8 @@ impl<const P: u64> Z64<P> {
         gcd(self.0, Self::modulus()) == 1
     }
 
-    fn info() -> Z64Info {
-        // TODO: make this static as soon as possible
-        // the problem is that rust 1.62 always returns the same instance,
-        // even for different values for P
-        thread_local!(static INFO: UnsafeCell<Z64Info> = Default::default());
-        INFO.with(|f| unsafe {
-            let info = f.get();
-            if (*info).p != P {
-                *info = Z64Info::new(P);
-            };
-            *info
-        })
+    fn info() -> &'static Z64Info {
+        &Self::INFO
     }
 
     pub const fn modulus() -> u64 {
@@ -297,7 +288,7 @@ struct Z64Info {
 }
 
 impl Z64Info {
-    fn new(p: u64) -> Self {
+    const fn new(p: u64) -> Self {
         assert!(p > 1);
         assert!(used_bits(p) <= SP_NBITS);
 
@@ -311,9 +302,9 @@ impl Z64Info {
     }
 }
 
-fn prep_mul_mod(p: u64) -> SpInverse64 {
+const fn prep_mul_mod(p: u64) -> SpInverse64 {
     let shamt = p.leading_zeros() - (u64::BITS - SP_NBITS);
-    let inv = normalized_prep_mul_mod(p << shamt);
+    let inv = normalised_prep_mul_mod(p << shamt);
     SpInverse64 { inv, shamt }
 }
 
@@ -323,40 +314,48 @@ struct ReduceStruct {
     sgn: u64,
 }
 
-fn prep_rem(p: u64) -> ReduceStruct {
+const fn prep_rem(p: u64) -> ReduceStruct {
     let mut q = (1 << (u64::BITS - 1)) / p;
     // r = 2^63 % p
     let r = (1 << (u64::BITS - 1)) - q * p;
 
     q *= 2;
-    let _ = correct_excess_quo(&mut q, 2 * r as i64, p as i64);
+    q += correct_excess_quo(2 * r as i64, p as i64).0;
 
     ReduceStruct { ninv: q, sgn: r }
 }
 
-fn correct_excess_quo(q: &mut u64, a: i64, n: i64) -> i64 {
+const fn correct_excess_quo(a: i64, n: i64) -> (u64, i64) {
     if a >= n {
-        *q += 1;
-        a - n
+        (1, a - n)
     } else {
-        a
+        (0, a)
     }
 }
 
+// TODO: make const as soon as allowed by rust
 trait SignMask {
     fn sign_mask(self) -> i64;
 }
 
 impl SignMask for u64 {
     fn sign_mask(self) -> i64 {
-        (self as i64).sign_mask()
+        u64_sign_mask(self)
     }
 }
 
 impl SignMask for i64 {
     fn sign_mask(self) -> i64 {
-        self >> (u64::BITS - 1)
+        i64_sign_mask(self)
     }
+}
+
+const fn i64_sign_mask(i: i64) -> i64 {
+    i >> (u64::BITS - 1)
+}
+
+const fn u64_sign_mask(i: u64) -> i64 {
+    i64_sign_mask(i as i64)
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -365,43 +364,46 @@ pub struct SpInverse64 {
     shamt: u32,
 }
 
-fn normalized_prep_mul_mod(n: u64) -> u64 {
-    let ninv = 1. / (n as f64);
-
+// Adapted from NTL's sp_NormalizedPrepMulMod
+//
+// Floating-point arithmetic replaced be u128 / i128 to allow `const`.
+// The performance impact is not a huge concern since this function
+// is only evaluated at compile time and only once for each prime field order.
+// This is unlike NTL, where each change triggers a recalculation?
+//
+// This only works since this function is `const` and can be therefore
+// used to compute individual `const INFO` inside `Z64<P>` for each
+// `P`. The alternatives `lazy_static!` or `OnceCell` would not be
+// recomputed, but instead incorrectly shared between `Z64<P>` with
+// different `P`!
+const fn normalised_prep_mul_mod(n: u64) -> u64 {
     // NOTE: this is an initial approximation
     //       the true quotient is <= 2^SP_NBITS
-    let init_quot_approx = ((1u64 << (SP_NBITS - 1)) as f64
-        * (1u64 << SP_NBITS) as f64
-        * ninv) as u64;
+    const MAX: u128 = 1u128 << (2*SP_NBITS - 1);
+    let init_quot_approx = MAX / n as u128;
 
-    let wot = 1u128 << (2 * SP_NBITS - 1);
-    let approx_rem = wot.wrapping_sub(n as u128 * init_quot_approx as u128);
+    let approx_rem = MAX - n as u128 * init_quot_approx;
 
     let approx_rem = (approx_rem << (PRE_SHIFT2 - 2 * SP_NBITS + 1)) - 1;
 
-    // now compute a floating point approximation to the remainder,
-    // but avoiding unsigned -> float conversions,
-    // as these are not as well supported in hardware as
-    // signed -> float conversions
-
     let approx_rem_low = approx_rem as u64;
-    let approx_rem_high =
-        (approx_rem >> u64::BITS) as u64 + (approx_rem_low >> (u64::BITS - 1));
+    let s1 = (approx_rem >> u64::BITS) as u64;
+    let s2 = approx_rem_low >> (u64::BITS - 1);
+    let approx_rem_high = s1.wrapping_add(s2);
 
     let approx_rem_low = approx_rem_low as i64;
     let approx_rem_high = approx_rem_high as i64;
 
-    let bpl =
-        (1u64 << SP_NBITS) as f64 * (1u64 << (u64::BITS - SP_NBITS)) as f64;
+    let bpl = 1i128 << u64::BITS;
 
-    let fr = approx_rem_low as f64 + approx_rem_high as f64 * bpl;
+    let fr = approx_rem_low as i128 + approx_rem_high as i128 * bpl;
 
     // now convert fr*ninv to a long
     // but we have to be careful: fr may be negative.
     // the result should still give floor(r/n) pm 1,
     // and is computed in a way that avoids branching
 
-    let mut q1 = (fr * ninv) as i64;
+    let mut q1 = (fr / n as i128) as i64;
     if q1 < 0 {
         // This counteracts the round-to-zero behavior of conversion
         // to i64.  It should be compiled into branch-free code.
@@ -414,10 +416,10 @@ fn normalized_prep_mul_mod(n: u64) -> u64 {
 
     let approx_rem = approx_rem_low.wrapping_sub(sub);
 
-    q1 += (1 + approx_rem.sign_mask() + approx_rem.wrapping_sub(n).sign_mask())
+    q1 += (1 + u64_sign_mask(approx_rem) + u64_sign_mask(approx_rem.wrapping_sub(n)))
         as u64;
 
-    (init_quot_approx << (PRE_SHIFT2 - 2 * SP_NBITS + 1)).wrapping_add(q1)
+    ((init_quot_approx as u64) << (PRE_SHIFT2 - 2 * SP_NBITS + 1)).wrapping_add(q1)
 
     // NTL_PRE_SHIFT1 is 0, so no further shift required
 }
