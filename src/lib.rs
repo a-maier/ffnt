@@ -1,5 +1,7 @@
 #[cfg(feature = "rand")]
 pub mod rand;
+#[cfg(feature = "num-traits")]
+pub mod num_traits;
 
 use std::{
     fmt::{self, Display},
