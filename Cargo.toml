@@ -2,6 +2,12 @@
 name = "galois-fields"
 version = "0.1.0"
 edition = "2021"
+description = "Finite field arithmetic"
+authors = ["Andreas Maier <andreas.martin.maier@desy.de>"]
+license = "GPL-3.0-or-later"
+readme = "Readme.md"
+keywords = []
+categories = ["Mathematics"]
 
 [dependencies]
 
