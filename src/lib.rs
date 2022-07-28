@@ -30,6 +30,10 @@ impl<const P: u64> Z64<P> {
         }
     }
 
+    pub fn has_inv(&self) -> bool {
+        gcd(self.0, Self::modulus()) == 1
+    }
+
     fn info() -> Z64Info {
         // TODO: make this static as soon as possible
         // the problem is that rust 1.62 always returns the same instance,
@@ -271,6 +275,13 @@ fn extended_gcd(a: u64, b: u64) -> ExtendedGCDResult {
     }
 }
 
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        (a, b) = (b, a % b)
+    }
+    a
+}
+
 const SP_NBITS: u32 = u64::BITS - 4;
 const PRE_SHIFT2: u32 = 2 * SP_NBITS + 2;
 
@@ -443,6 +454,32 @@ mod tests {
         assert_eq!(tst.p_inv.shamt, 0);
         assert_eq!(tst.red_struct.ninv, 16);
         assert_eq!(tst.red_struct.sgn, 744);
+    }
+
+    #[test]
+    fn z64_has_inv() {
+        type Z = Z64<6>;
+        assert!(!Z::from(0).has_inv());
+        assert!(Z::from(1).has_inv());
+        assert!(!Z::from(2).has_inv());
+        assert!(!Z::from(3).has_inv());
+        assert!(!Z::from(4).has_inv());
+        assert!(Z::from(5).has_inv());
+        assert_eq!(Z::from(6), Z::from(0));
+    }
+
+    #[test]
+    #[should_panic]
+    fn z64_inv0() {
+        type Z = Z64<6>;
+        Z::from(0).inv();
+    }
+
+    #[test]
+    #[should_panic]
+    fn z64_inv2() {
+        type Z = Z64<6>;
+        Z::from(2).inv();
     }
 
     #[test]
