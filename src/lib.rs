@@ -1,3 +1,6 @@
+#[cfg(feature = "rand")]
+pub mod rand;
+
 use std::{
     fmt::{self, Display},
     ops::{
@@ -17,6 +20,11 @@ impl<const P: u64> Z64<P> {
         let res = res as u64;
         debug_assert!(res < P);
         Self(res)
+    }
+
+    pub fn new_unchecked(z: u64) -> Self {
+        debug_assert!(z <= P);
+        Self(z)
     }
 
     pub fn inv(&self) -> Self {
@@ -428,7 +436,7 @@ const fn normalised_prep_mul_mod(n: u64) -> u64 {
 mod tests {
 
     use once_cell::sync::Lazy;
-    use rand::{Rng, SeedableRng};
+    use ::rand::{Rng, SeedableRng};
 
     use super::*;
 
