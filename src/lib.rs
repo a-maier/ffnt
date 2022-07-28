@@ -2,6 +2,8 @@
 pub mod rand;
 #[cfg(feature = "num-traits")]
 pub mod num_traits;
+#[cfg(feature = "serde")]
+use serde::{Serialize, Deserialize};
 
 use std::{
     fmt::{self, Display},
@@ -10,6 +12,7 @@ use std::{
     },
 };
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Z64<const P: u64>(u64);
 
