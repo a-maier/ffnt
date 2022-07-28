@@ -19,7 +19,7 @@ pub struct Z64<const P: u64>(u64);
 impl<const P: u64> Z64<P> {
     const INFO: Z64Info = Z64Info::new(P);
 
-    pub fn new(z: i64) -> Self {
+    pub const fn new(z: i64) -> Self {
         let res = remi(z, P, Self::info().red_struct);
         debug_assert!(res >= 0);
         let res = res as u64;
@@ -27,7 +27,7 @@ impl<const P: u64> Z64<P> {
         Self(res)
     }
 
-    pub fn new_unchecked(z: u64) -> Self {
+    pub const fn new_unchecked(z: u64) -> Self {
         debug_assert!(z <= P);
         Self(z)
     }
@@ -44,11 +44,11 @@ impl<const P: u64> Z64<P> {
         }
     }
 
-    pub fn has_inv(&self) -> bool {
+    pub const fn has_inv(&self) -> bool {
         gcd(self.0, Self::modulus()) == 1
     }
 
-    fn info() -> &'static Z64Info {
+    const fn info() -> &'static Z64Info {
         &Self::INFO
     }
 
@@ -56,7 +56,7 @@ impl<const P: u64> Z64<P> {
         P
     }
 
-    pub fn modulus_inv() -> SpInverse64 {
+    pub const fn modulus_inv() -> SpInverse64 {
         Self::info().p_inv
     }
 }
@@ -201,7 +201,7 @@ impl<const P: u64> Div for Z64<P> {
     }
 }
 
-fn mul_mod(a: u64, b: u64, n: u64, ninv: SpInverse64) -> u64 {
+const fn mul_mod(a: u64, b: u64, n: u64, ninv: SpInverse64) -> u64 {
     let res = normalised_mul_mod(
         a,
         (b as i64) << ninv.shamt,
@@ -211,7 +211,7 @@ fn mul_mod(a: u64, b: u64, n: u64, ninv: SpInverse64) -> u64 {
     res as u64
 }
 
-fn normalised_mul_mod(a: u64, b: i64, n: u64, ninv: u64) -> i64 {
+const fn normalised_mul_mod(a: u64, b: i64, n: u64, ninv: u64) -> i64 {
     let u = a as u128 * b as u128;
     let h = (u >> (SP_NBITS - 2)) as u64;
     let q = u128_mul_high(h, ninv);
@@ -222,35 +222,35 @@ fn normalised_mul_mod(a: u64, b: i64, n: u64, ninv: u64) -> i64 {
     correct_excess(r as i64, n)
 }
 
-fn remu(z: u64, p: u64, red: ReduceStruct) -> i64 {
+const fn remu(z: u64, p: u64, red: ReduceStruct) -> i64 {
     let q = u128_mul_high(z, red.ninv);
     let qp = q.wrapping_mul(p);
     let r = z as i64 - qp as i64;
     correct_excess(r as i64, p)
 }
 
-fn remi(z: i64, p: u64, red: ReduceStruct) -> i64 {
+const fn remi(z: i64, p: u64, red: ReduceStruct) -> i64 {
     let zu = (z as u64) & ((1u64 << (u64::BITS - 1)) - 1);
     let r = remu(zu, p, red);
-    let s = z.sign_mask() & (red.sgn as i64);
+    let s = i64_sign_mask(z) & (red.sgn as i64);
     correct_deficit(r - s, p)
 }
 
-fn u128_mul_high(a: u64, b: u64) -> u64 {
+const fn u128_mul_high(a: u64, b: u64) -> u64 {
     u128_get_high(a as u128 * b as u128)
 }
 
-fn u128_get_high(u: u128) -> u64 {
+const fn u128_get_high(u: u128) -> u64 {
     (u >> u64::BITS) as u64
 }
 
-fn correct_excess(a: i64, p: u64) -> i64 {
+const fn correct_excess(a: i64, p: u64) -> i64 {
     let n = p as i64;
-    (a - n) + ((a - n).sign_mask() & n)
+    (a - n) + (i64_sign_mask(a - n) & n)
 }
 
-fn correct_deficit(a: i64, p: u64) -> i64 {
-    a + (a.sign_mask() & (p as i64))
+const fn correct_deficit(a: i64, p: u64) -> i64 {
+    a + (i64_sign_mask(a) & (p as i64))
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -259,7 +259,7 @@ struct ExtendedGCDResult {
     bezout: [i64; 2],
 }
 
-fn extended_gcd(a: u64, b: u64) -> ExtendedGCDResult {
+const fn extended_gcd(a: u64, b: u64) -> ExtendedGCDResult {
     let mut old_r = a;
     let mut r = b;
     let mut old_s = 1;
@@ -279,7 +279,7 @@ fn extended_gcd(a: u64, b: u64) -> ExtendedGCDResult {
     }
 }
 
-fn gcd(mut a: u64, mut b: u64) -> u64 {
+const fn gcd(mut a: u64, mut b: u64) -> u64 {
     while b != 0 {
         (a, b) = (b, a % b)
     }
