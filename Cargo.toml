@@ -10,6 +10,7 @@ keywords = []
 categories = ["Mathematics"]
 
 [dependencies]
+rand = { version = "0.8", optional = true }
 
 [dev-dependencies]
 criterion = "0.3"
