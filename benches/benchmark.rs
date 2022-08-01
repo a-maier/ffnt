@@ -2,6 +2,7 @@ use criterion::{criterion_group, criterion_main, Criterion, BatchSize};
 
 use galois_fields::Z64;
 use rand::{Rng, SeedableRng};
+use num_traits::Zero;
 
 const PRIMES: [u64; 3] = [3, 443619635352171979, 1152921504606846883];
 
@@ -35,8 +36,8 @@ macro_rules! bench_op {
                         b.iter_batched(
                             || {
                                 let res: [Z64<{ PRIMES[$x] }>; 2] = [
-                                    rng.gen::<i64>().into(),
-                                    rng.gen::<i64>().into()
+                                    rng.gen(),
+                                    rng.gen()
                                 ];
                                 res
                             },
@@ -60,11 +61,11 @@ macro_rules! bench_div {
                         b.iter_batched(
                             || {
                                 let res: [Z64<{ PRIMES[$x] }>; 2] = [
-                                    rng.gen::<i64>().into(),
+                                    rng.gen(),
                                     {
-                                        let mut den: Z64<{ PRIMES[$x] }> = 0.into();
-                                        while den == 0.into() {
-                                            den = rng.gen::<i64>().into()
+                                        let mut den: Z64<{ PRIMES[$x] }> = Zero::zero();
+                                        while den.is_zero() {
+                                            den = rng.gen()
                                         }
                                         den
                                     }
@@ -79,7 +80,6 @@ macro_rules! bench_div {
         )*
     };
 }
-
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = rand_xoshiro::Xoshiro256StarStar::seed_from_u64(0);
