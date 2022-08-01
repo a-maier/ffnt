@@ -59,6 +59,26 @@ impl<const P: u64> Z64<P> {
     pub const fn modulus_inv() -> SpInverse64 {
         Self::info().p_inv
     }
+
+    pub fn powi(self, exp: i64) -> Self {
+        if exp < 0 {
+            self.powu((-exp) as u64).inv()
+        } else {
+            self.powu(exp as u64)
+        }
+    }
+
+    pub fn powu(mut self, mut exp: u64) -> Self {
+        let mut res = Self::new_unchecked(1);
+        while exp > 0 {
+            if exp & 1 != 0 {
+                res *= self
+            };
+            self *= self;
+            exp /= 2;
+        }
+        res
+    }
 }
 
 impl<const P: u64> From<Z64<P>> for u64 {
@@ -442,6 +462,7 @@ mod tests {
 
     use once_cell::sync::Lazy;
     use ::rand::{Rng, SeedableRng};
+    use rug::{Integer, ops::Pow};
 
     use super::*;
 
@@ -709,4 +730,35 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn tst_pow() {
+        let mut rng = rand_xoshiro::Xoshiro256StarStar::seed_from_u64(2849);
+        for pt1 in *POINTS {
+            let base = Integer::from(pt1);
+            for _ in 0..100 {
+                let exp: u8 = rng.gen();
+                let pow = base.clone().pow(exp as u32);
+                // ensure remainder is positive and less than the mod
+                let ref_pow0 = (pow.clone() % PRIMES[0] + PRIMES[0]) % PRIMES[0];
+                let ref_pow0: u64 = ref_pow0.try_into().unwrap();
+                let z: Z64<{ PRIMES[0] }> = pt1.into();
+                let pow0: u64 = z.powu(exp as u64).into();
+                assert_eq!(pow0, ref_pow0);
+
+                let ref_pow0 = (pow.clone() % PRIMES[1] + PRIMES[1]) % PRIMES[1];
+                let ref_pow0: u64 = ref_pow0.try_into().unwrap();
+                let z: Z64<{ PRIMES[1] }> = pt1.into();
+                let pow0: u64 = z.powu(exp as u64).into();
+                assert_eq!(pow0, ref_pow0);
+
+                let ref_pow0 = (pow % PRIMES[2] + PRIMES[2]) % PRIMES[2];
+                let ref_pow0: u64 = ref_pow0.try_into().unwrap();
+                let z: Z64<{ PRIMES[2] }> = pt1.into();
+                let pow0: u64 = z.powu(exp as u64).into();
+                assert_eq!(pow0, ref_pow0);
+            }
+        }
+    }
+
 }

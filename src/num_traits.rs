@@ -63,21 +63,90 @@ impl<const P: u64> Rem for Z64<P> {
     }
 }
 
-macro_rules! impl_pow {
+impl<const P: u64> Pow<i8> for Z64<P> {
+    type Output = Self;
+
+    fn pow(self, exp: i8) -> Self::Output {
+        if exp < 0 {
+            self.pow((-exp) as u8).inv()
+        } else {
+            self.pow(exp as u8)
+        }
+    }
+}
+
+impl<const P: u64> Pow<i16> for Z64<P> {
+    type Output = Self;
+
+    fn pow(self, exp: i16) -> Self::Output {
+        if exp < 0 {
+            self.pow((-exp) as u16).inv()
+        } else {
+            self.pow(exp as u16)
+        }
+    }
+}
+
+impl<const P: u64> Pow<i32> for Z64<P> {
+    type Output = Self;
+
+    fn pow(self, exp: i32) -> Self::Output {
+        if exp < 0 {
+            self.pow((-exp) as u32).inv()
+        } else {
+            self.pow(exp as u32)
+        }
+    }
+}
+
+impl<const P: u64> Pow<i64> for Z64<P> {
+    type Output = Self;
+
+    fn pow(self, exp: i64) -> Self::Output {
+        if exp < 0 {
+            self.pow((-exp) as u64).inv()
+        } else {
+            self.pow(exp as u64)
+        }
+    }
+}
+
+impl<const P: u64> Pow<i128> for Z64<P> {
+    type Output = Self;
+
+    fn pow(self, exp: i128) -> Self::Output {
+        if exp < 0 {
+            self.pow((-exp) as u128).inv()
+        } else {
+            self.pow(exp as u128)
+        }
+    }
+}
+
+// TODO: code duplication with Self::powu
+macro_rules! impl_powu {
     ( $( $x:ty ),* ) => {
         $(
             impl<const P: u64> Pow<$x> for Z64<P> {
                 type Output = Self;
 
-                fn pow(self, _rhs: $x) -> Self::Output {
-                    todo!()
+                fn pow(mut self, mut exp: $x) -> Self::Output {
+                    let mut res = Self::new_unchecked(1);
+                    while exp > 0 {
+                        if exp & 1 != 0 {
+                            res *= self
+                        };
+                        self *= self;
+                        exp /= 2;
+                    }
+                    res
                 }
             }
         )*
     };
 }
 
-impl_pow!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128);
+impl_powu!(u8, u16, u32, u64, u128);
 
 macro_rules! impl_as_primitive {
     ( $( $x:ty ),* ) => {
