@@ -1,3 +1,4 @@
+// run with `cargo criterion --features rand,num-traits`
 use criterion::{criterion_group, criterion_main, Criterion, BatchSize};
 
 use galois_fields::Z64;
@@ -81,6 +82,35 @@ macro_rules! bench_div {
     };
 }
 
+
+macro_rules! bench_pow {
+    ( $c:ident, $rng:ident, $( $x:literal ),* ) => {
+        $(
+            {
+                let rng = &mut $rng;
+                $c.bench_function(
+                    &format!("^ mod {}", PRIMES[$x]),
+                    move |b| {
+                        b.iter_batched(
+                            || {
+                                let mut base: Z64<{ PRIMES[$x] }> = Zero::zero();
+                                let mut exp: i64 = -1;
+                                while base.is_zero() && exp < 0 {
+                                    base = rng.gen();
+                                    exp = rng.gen();
+                                }
+                                (base, exp)
+                            },
+                            |(base, exp)|  base.powi(exp),
+                            BatchSize::SmallInput,
+                        )
+                    });
+            }
+        )*
+    };
+}
+
+
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = rand_xoshiro::Xoshiro256StarStar::seed_from_u64(0);
     bench_new!(c, rng, 0, 1, 2);
@@ -88,6 +118,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     bench_op!(c, rng, -, 0, 1, 2);
     bench_op!(c, rng, *, 0, 1, 2);
     bench_div!(c, rng, 0, 1, 2);
+    bench_pow!(c, rng, 0, 1, 2);
 }
 
 criterion_group!(benches, criterion_benchmark);
