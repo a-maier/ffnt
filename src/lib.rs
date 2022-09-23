@@ -1,9 +1,9 @@
-#[cfg(feature = "rand")]
-pub mod rand;
 #[cfg(feature = "num-traits")]
 pub mod num_traits;
+#[cfg(feature = "rand")]
+pub mod rand;
 #[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::{
     fmt::{self, Display},
@@ -412,7 +412,7 @@ pub struct SpInverse64 {
 const fn normalised_prep_mul_mod(n: u64) -> u64 {
     // NOTE: this is an initial approximation
     //       the true quotient is <= 2^SP_NBITS
-    const MAX: u128 = 1u128 << (2*SP_NBITS - 1);
+    const MAX: u128 = 1u128 << (2 * SP_NBITS - 1);
     let init_quot_approx = MAX / n as u128;
 
     let approx_rem = MAX - n as u128 * init_quot_approx;
@@ -449,10 +449,12 @@ const fn normalised_prep_mul_mod(n: u64) -> u64 {
 
     let approx_rem = approx_rem_low.wrapping_sub(sub);
 
-    q1 += (1 + u64_sign_mask(approx_rem) + u64_sign_mask(approx_rem.wrapping_sub(n)))
-        as u64;
+    q1 += (1
+        + u64_sign_mask(approx_rem)
+        + u64_sign_mask(approx_rem.wrapping_sub(n))) as u64;
 
-    ((init_quot_approx as u64) << (PRE_SHIFT2 - 2 * SP_NBITS + 1)).wrapping_add(q1)
+    ((init_quot_approx as u64) << (PRE_SHIFT2 - 2 * SP_NBITS + 1))
+        .wrapping_add(q1)
 
     // NTL_PRE_SHIFT1 is 0, so no further shift required
 }
@@ -460,9 +462,9 @@ const fn normalised_prep_mul_mod(n: u64) -> u64 {
 #[cfg(test)]
 mod tests {
 
-    use once_cell::sync::Lazy;
     use ::rand::{Rng, SeedableRng};
-    use rug::{Integer, ops::Pow};
+    use once_cell::sync::Lazy;
+    use rug::{ops::Pow, Integer};
 
     use super::*;
 
@@ -740,13 +742,15 @@ mod tests {
                 let exp: u8 = rng.gen();
                 let pow = base.clone().pow(exp as u32);
                 // ensure remainder is positive and less than the mod
-                let ref_pow0 = (pow.clone() % PRIMES[0] + PRIMES[0]) % PRIMES[0];
+                let ref_pow0 =
+                    (pow.clone() % PRIMES[0] + PRIMES[0]) % PRIMES[0];
                 let ref_pow0: u64 = ref_pow0.try_into().unwrap();
                 let z: Z64<{ PRIMES[0] }> = pt1.into();
                 let pow0: u64 = z.powu(exp as u64).into();
                 assert_eq!(pow0, ref_pow0);
 
-                let ref_pow0 = (pow.clone() % PRIMES[1] + PRIMES[1]) % PRIMES[1];
+                let ref_pow0 =
+                    (pow.clone() % PRIMES[1] + PRIMES[1]) % PRIMES[1];
                 let ref_pow0: u64 = ref_pow0.try_into().unwrap();
                 let z: Z64<{ PRIMES[1] }> = pt1.into();
                 let pow0: u64 = z.powu(exp as u64).into();
@@ -760,5 +764,4 @@ mod tests {
             }
         }
     }
-
 }

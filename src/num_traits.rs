@@ -2,7 +2,7 @@ use std::ops::Rem;
 
 use crate::Z64;
 
-use num_traits::{AsPrimitive, Bounded, One, Inv, Pow, Unsigned, Num, Zero};
+use num_traits::{AsPrimitive, Bounded, Inv, Num, One, Pow, Unsigned, Zero};
 
 impl<const P: u64> Bounded for Z64<P> {
     fn min_value() -> Self {
@@ -42,14 +42,14 @@ impl<const P: u64> Inv for Z64<P> {
     }
 }
 
-impl<const P: u64> Unsigned for Z64<P> { }
+impl<const P: u64> Unsigned for Z64<P> {}
 
 impl<const P: u64> Num for Z64<P> {
     type FromStrRadixErr = <u64 as Num>::FromStrRadixErr;
 
     fn from_str_radix(
         str: &str,
-        radix: u32
+        radix: u32,
     ) -> Result<Self, Self::FromStrRadixErr> {
         Ok(Self::new(i64::from_str_radix(str, radix)?))
     }
@@ -172,12 +172,29 @@ mod tests {
     #[test]
     fn bounded() {
         use crate::Z64;
-        assert_eq!(Z64::<{PRIMES[0]}>::min_value(), Z64::<{PRIMES[0]}>::new(0));
-        assert_eq!(Z64::<{PRIMES[0]}>::max_value(), Z64::<{PRIMES[0]}>::new(-1));
-        assert_eq!(Z64::<{PRIMES[1]}>::min_value(), Z64::<{PRIMES[1]}>::new(0));
-        assert_eq!(Z64::<{PRIMES[1]}>::max_value(), Z64::<{PRIMES[1]}>::new(-1));
-        assert_eq!(Z64::<{PRIMES[2]}>::min_value(), Z64::<{PRIMES[2]}>::new(0));
-        assert_eq!(Z64::<{PRIMES[2]}>::max_value(), Z64::<{PRIMES[2]}>::new(-1));
+        assert_eq!(
+            Z64::<{ PRIMES[0] }>::min_value(),
+            Z64::<{ PRIMES[0] }>::new(0)
+        );
+        assert_eq!(
+            Z64::<{ PRIMES[0] }>::max_value(),
+            Z64::<{ PRIMES[0] }>::new(-1)
+        );
+        assert_eq!(
+            Z64::<{ PRIMES[1] }>::min_value(),
+            Z64::<{ PRIMES[1] }>::new(0)
+        );
+        assert_eq!(
+            Z64::<{ PRIMES[1] }>::max_value(),
+            Z64::<{ PRIMES[1] }>::new(-1)
+        );
+        assert_eq!(
+            Z64::<{ PRIMES[2] }>::min_value(),
+            Z64::<{ PRIMES[2] }>::new(0)
+        );
+        assert_eq!(
+            Z64::<{ PRIMES[2] }>::max_value(),
+            Z64::<{ PRIMES[2] }>::new(-1)
+        );
     }
-
 }

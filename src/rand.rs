@@ -1,5 +1,5 @@
-use rand::Rng;
 use rand::distributions::{Distribution, Standard};
+use rand::Rng;
 
 use crate::Z64;
 
@@ -22,9 +22,9 @@ mod tests {
         let mut rng = rand_xoshiro::Xoshiro256StarStar::seed_from_u64(0);
 
         for _ in 0..1000 {
-            let _z: Z64<{PRIMES[0]}> = rng.gen();
-            let _z: Z64<{PRIMES[1]}> = rng.gen();
-            let _z: Z64<{PRIMES[2]}> = rng.gen();
+            let _z: Z64<{ PRIMES[0] }> = rng.gen();
+            let _z: Z64<{ PRIMES[1] }> = rng.gen();
+            let _z: Z64<{ PRIMES[2] }> = rng.gen();
         }
     }
 }

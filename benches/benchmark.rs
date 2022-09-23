@@ -1,9 +1,9 @@
 // run with `cargo criterion --features rand,num-traits`
-use criterion::{criterion_group, criterion_main, Criterion, BatchSize};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 
 use galois_fields::Z64;
-use rand::{Rng, SeedableRng};
 use num_traits::Zero;
+use rand::{Rng, SeedableRng};
 
 const PRIMES: [u64; 3] = [3, 443619635352171979, 1152921504606846883];
 
@@ -82,7 +82,6 @@ macro_rules! bench_div {
     };
 }
 
-
 macro_rules! bench_pow {
     ( $c:ident, $rng:ident, $( $x:literal ),* ) => {
         $(
@@ -109,7 +108,6 @@ macro_rules! bench_pow {
         )*
     };
 }
-
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = rand_xoshiro::Xoshiro256StarStar::seed_from_u64(0);
