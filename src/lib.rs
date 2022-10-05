@@ -153,9 +153,21 @@ impl<const P: u64> AddAssign for Z64<P> {
     }
 }
 
+impl<const P: u64> AddAssign<&Z64<P>> for Z64<P> {
+    fn add_assign(&mut self, rhs: &Self) {
+        *self = *self + *rhs;
+    }
+}
+
 impl<const P: u64> SubAssign for Z64<P> {
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs;
+    }
+}
+
+impl<const P: u64> SubAssign<&Z64<P>> for Z64<P> {
+    fn sub_assign(&mut self, rhs: &Self) {
+        *self -= *rhs;
     }
 }
 
@@ -165,9 +177,21 @@ impl<const P: u64> MulAssign for Z64<P> {
     }
 }
 
+impl<const P: u64> MulAssign<&Z64<P>> for Z64<P> {
+    fn mul_assign(&mut self, rhs: &Self) {
+        *self = *self * *rhs;
+    }
+}
+
 impl<const P: u64> DivAssign for Z64<P> {
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;
+    }
+}
+
+impl<const P: u64> DivAssign<&Z64<P>> for Z64<P> {
+    fn div_assign(&mut self, rhs: &Self) {
+        *self = *self / *rhs;
     }
 }
 
@@ -180,6 +204,30 @@ impl<const P: u64> Add for Z64<P> {
         let res = res as u64;
         debug_assert!(res < Self::modulus());
         Self(res)
+    }
+}
+
+impl<const P: u64> Add for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        *self + *rhs
+    }
+}
+
+impl<const P: u64> Add<Z64<P>> for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn add(self, rhs: Z64<P>) -> Self::Output {
+        *self + rhs
+    }
+}
+
+impl<const P: u64> Add<&Z64<P>> for Z64<P> {
+    type Output = Z64<P>;
+
+    fn add(self, rhs: &Z64<P>) -> Self::Output {
+        self + *rhs
     }
 }
 
@@ -196,6 +244,30 @@ impl<const P: u64> Sub for Z64<P> {
     }
 }
 
+impl<const P: u64> Sub for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        *self - *rhs
+    }
+}
+
+impl<const P: u64> Sub<Z64<P>> for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn sub(self, rhs: Z64<P>) -> Self::Output {
+        *self - rhs
+    }
+}
+
+impl<const P: u64> Sub<&Z64<P>> for Z64<P> {
+    type Output = Z64<P>;
+
+    fn sub(self, rhs: &Z64<P>) -> Self::Output {
+        self - *rhs
+    }
+}
+
 impl<const P: u64> Neg for Z64<P> {
     type Output = Self;
 
@@ -209,6 +281,30 @@ impl<const P: u64> Mul for Z64<P> {
 
     fn mul(self, rhs: Self) -> Self::Output {
         Self(mul_mod(self.0, rhs.0, Self::modulus(), Self::modulus_inv()))
+    }
+}
+
+impl<const P: u64> Mul for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        *self * *rhs
+    }
+}
+
+impl<const P: u64> Mul<Z64<P>> for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn mul(self, rhs: Z64<P>) -> Self::Output {
+        *self * rhs
+    }
+}
+
+impl<const P: u64> Mul<&Z64<P>> for Z64<P> {
+    type Output = Z64<P>;
+
+    fn mul(self, rhs: &Z64<P>) -> Self::Output {
+        self * *rhs
     }
 }
 
@@ -229,6 +325,30 @@ const fn mul_mod(a: u64, b: u64, n: u64, ninv: SpInverse64) -> u64 {
         ninv.inv,
     ) >> ninv.shamt;
     res as u64
+}
+
+impl<const P: u64> Div for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        *self / *rhs
+    }
+}
+
+impl<const P: u64> Div<Z64<P>> for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn div(self, rhs: Z64<P>) -> Self::Output {
+        *self / rhs
+    }
+}
+
+impl<const P: u64> Div<&Z64<P>> for Z64<P> {
+    type Output = Z64<P>;
+
+    fn div(self, rhs: &Z64<P>) -> Self::Output {
+        self / *rhs
+    }
 }
 
 const fn normalised_mul_mod(a: u64, b: i64, n: u64, ninv: u64) -> i64 {
