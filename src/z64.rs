@@ -672,8 +672,6 @@ mod tests {
 
     #[test]
     fn tst_conv() {
-        // separate for loops are faster because we don't have to recalculate
-        // the thread local Z64Info in each iteration
         for pt in *POINTS {
             let z: Z64<{ PRIMES[0] }> = pt.into();
             let z: i64 = z.into();
