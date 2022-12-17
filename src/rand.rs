@@ -1,43 +1,54 @@
+use crate::{Z32, Z64};
+
 use rand::distributions::{Distribution, Standard, uniform::{SampleBorrow, SampleUniform, UniformInt, UniformSampler}};
 use rand::Rng;
+use paste::paste;
 
-use crate::Z64;
+macro_rules! impl_rand {
+    ( $($z:literal), *) => {
+        $(
+            paste!{
+                impl<const P: [<u $z>]> Distribution<[<Z $z>]<P>> for Standard {
+                    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> [<Z $z>]<P> {
+                        [<Z $z>]::new_unchecked(rng.gen_range(0..P))
+                    }
+                }
 
-impl<const P: u64> Distribution<Z64<P>> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Z64<P> {
-        Z64::new_unchecked(rng.gen_range(0..P))
+                #[derive(Clone, Copy, Debug)]
+                pub struct [<UniformZ $z>]<const P: [<u $z>]>(UniformInt<[<u $z>]>);
+
+                impl<const P: [<u $z>]> UniformSampler for [<UniformZ $z>]<P> {
+                    type X = [<Z $z>]<P>;
+
+                    fn new<B1, B2>(low: B1, high: B2) -> Self
+                    where B1: SampleBorrow<Self::X> + Sized,
+                          B2: SampleBorrow<Self::X> + Sized
+                    {
+                        [<UniformZ $z>](UniformInt::<[<u $z>]>::new(low.borrow().0, high.borrow().0))
+                    }
+                    fn new_inclusive<B1, B2>(low: B1, high: B2) -> Self
+                    where B1: SampleBorrow<Self::X> + Sized,
+                          B2: SampleBorrow<Self::X> + Sized
+                    {
+                        [<UniformZ $z>](UniformInt::<[<u $z>]>::new_inclusive(
+                            low.borrow().0,
+                            high.borrow().0,
+                        ))
+                    }
+                    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
+                        [<Z $z>](self.0.sample(rng))
+                    }
+                }
+
+                impl<const P: [<u $z>]> SampleUniform for [<Z $z>]<P> {
+                    type Sampler = [<UniformZ $z>]<P>;
+                }
+            }
+        )*
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct UniformZ64<const P: u64>(UniformInt<u64>);
-
-impl<const P: u64> UniformSampler for UniformZ64<P> {
-    type X = Z64<P>;
-
-    fn new<B1, B2>(low: B1, high: B2) -> Self
-        where B1: SampleBorrow<Self::X> + Sized,
-              B2: SampleBorrow<Self::X> + Sized
-    {
-        UniformZ64(UniformInt::<u64>::new(low.borrow().0, high.borrow().0))
-    }
-    fn new_inclusive<B1, B2>(low: B1, high: B2) -> Self
-        where B1: SampleBorrow<Self::X> + Sized,
-              B2: SampleBorrow<Self::X> + Sized
-    {
-        UniformZ64(UniformInt::<u64>::new_inclusive(
-            low.borrow().0,
-            high.borrow().0,
-        ))
-    }
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
-        Z64(self.0.sample(rng))
-    }
-}
-
-impl<const P: u64> SampleUniform for Z64<P> {
-    type Sampler = UniformZ64<P>;
-}
+impl_rand!{32, 64}
 
 #[cfg(test)]
 mod tests {
