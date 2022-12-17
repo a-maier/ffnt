@@ -362,7 +362,7 @@ const fn remu(z: u64, p: u64, red: ReduceStruct) -> i64 {
     let q = u128_mul_high(z, red.ninv);
     let qp = q.wrapping_mul(p);
     let r = z as i64 - qp as i64;
-    correct_excess(r as i64, p)
+    correct_excess(r, p)
 }
 
 const fn remi(z: i64, p: u64, red: ReduceStruct) -> i64 {
