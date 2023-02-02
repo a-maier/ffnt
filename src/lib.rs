@@ -7,3 +7,4 @@ pub mod rand;
 
 pub use z32::Z32;
 pub use z64::Z64;
+pub use z64::TryDiv;
