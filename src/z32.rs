@@ -9,6 +9,8 @@ use std::{
     },
 };
 
+use crate::z64::TryDiv;
+
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Z32<const P: u32>(pub(crate) u32);
@@ -30,15 +32,23 @@ impl<const P: u32> Z32<P> {
     }
 
     pub fn inv(&self) -> Self {
+        self.try_inv().expect("Number has no multiplicative inverse")
+    }
+
+    pub fn try_inv(&self) -> Option<Self> {
         let res = extended_gcd(self.0, Self::modulus());
-        assert_eq!(res.gcd, 1, "inverse undefined for {}", self.0);
-        let s = res.bezout[0];
-        if s < 0 {
-            debug_assert!(s + Self::modulus() as i32 >= 0);
-            Self((s + Self::modulus() as i32) as u32)
-        } else {
-            Self(s as u32)
+        if res.gcd != 1 {
+            return None;
         }
+        let s = res.bezout[0];
+        Some(Self(
+            if s < 0 {
+                debug_assert!(s + Self::modulus() as i32 >= 0);
+                s + Self::modulus() as i32
+            } else {
+                s
+            } as u32
+        ))
     }
 
     pub const fn has_inv(&self) -> bool {
@@ -333,6 +343,38 @@ impl<const P: u32> Div<&Z32<P>> for Z32<P> {
 
     fn div(self, rhs: &Z32<P>) -> Self::Output {
         self / *rhs
+    }
+}
+
+impl<const P: u32> TryDiv for Z32<P> {
+    type Output = Self;
+
+    fn try_div(self, rhs: Self) -> Option<Self::Output> {
+        rhs.try_inv().map(|i| self * i)
+    }
+}
+
+impl<const P: u32> TryDiv for &Z32<P> {
+    type Output = Z32<P>;
+
+    fn try_div(self, rhs: Self) -> Option<Self::Output> {
+        (*self).try_div(*rhs)
+    }
+}
+
+impl<const P: u32> TryDiv<Z32<P>> for &Z32<P> {
+    type Output = Z32<P>;
+
+    fn try_div(self, rhs: Z32<P>) -> Option<Self::Output> {
+        (*self).try_div(rhs)
+    }
+}
+
+impl<const P: u32> TryDiv<&Z32<P>> for Z32<P> {
+    type Output = Z32<P>;
+
+    fn try_div(self, rhs: &Z32<P>) -> Option<Self::Output> {
+        self.try_div(*rhs)
     }
 }
 

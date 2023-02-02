@@ -29,15 +29,23 @@ impl<const P: u64> Z64<P> {
     }
 
     pub fn inv(&self) -> Self {
+        self.try_inv().expect("Number has no multiplicative inverse")
+    }
+
+    pub fn try_inv(&self) -> Option<Self> {
         let res = extended_gcd(self.0, Self::modulus());
-        assert_eq!(res.gcd, 1, "inverse undefined for {}", self.0);
-        let s = res.bezout[0];
-        if s < 0 {
-            debug_assert!(s + Self::modulus() as i64 >= 0);
-            Self((s + Self::modulus() as i64) as u64)
-        } else {
-            Self(s as u64)
+        if res.gcd != 1 {
+            return None;
         }
+        let s = res.bezout[0];
+        Some(Self(
+            if s < 0 {
+                debug_assert!(s + Self::modulus() as i64 >= 0);
+                s + Self::modulus() as i64
+            } else {
+                s
+            } as u64
+        ))
     }
 
     pub const fn has_inv(&self) -> bool {
@@ -344,6 +352,51 @@ impl<const P: u64> Div<&Z64<P>> for Z64<P> {
 
     fn div(self, rhs: &Z64<P>) -> Self::Output {
         self / *rhs
+    }
+}
+
+/// Fallible division
+pub trait TryDiv<Rhs = Self> {
+    /// Result type of successfull division
+    type Output;
+
+    /// Tries to divide by the argument.
+    ///
+    /// `a.try_div(b)` returns `Some(a / b)` if the division
+    /// is successful and `None` otherwise.
+    #[must_use]
+    fn try_div(self, rhs: Rhs) -> Option<Self::Output>;
+}
+
+impl<const P: u64> TryDiv for Z64<P> {
+    type Output = Self;
+
+    fn try_div(self, rhs: Self) -> Option<Self::Output> {
+        rhs.try_inv().map(|i| self * i)
+    }
+}
+
+impl<const P: u64> TryDiv for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn try_div(self, rhs: Self) -> Option<Self::Output> {
+        (*self).try_div(*rhs)
+    }
+}
+
+impl<const P: u64> TryDiv<Z64<P>> for &Z64<P> {
+    type Output = Z64<P>;
+
+    fn try_div(self, rhs: Z64<P>) -> Option<Self::Output> {
+        (*self).try_div(rhs)
+    }
+}
+
+impl<const P: u64> TryDiv<&Z64<P>> for Z64<P> {
+    type Output = Z64<P>;
+
+    fn try_div(self, rhs: &Z64<P>) -> Option<Self::Output> {
+        self.try_div(*rhs)
     }
 }
 
