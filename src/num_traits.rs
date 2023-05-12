@@ -172,6 +172,22 @@ macro_rules! impl_powu {
                     res
                 }
             }
+
+            impl<const P: u64> Pow<$x> for &Z64<P> {
+                type Output = Z64<P>;
+
+                fn pow(self, exp: $x) -> Self::Output {
+                    (*self).pow(exp)
+                }
+            }
+
+            impl<const P: u32> Pow<$x> for &Z32<P> {
+                type Output = Z32<P>;
+
+                fn pow(self, exp: $x) -> Self::Output {
+                    (*self).pow(exp)
+                }
+            }
         )*
     };
 }
