@@ -30,7 +30,7 @@ impl<const P: u32> Z32<P> {
     }
 
     pub const unsafe fn new_unchecked(z: u32) -> Self {
-        debug_assert!(z <= P);
+        debug_assert!(z < P);
         Self(z)
     }
 

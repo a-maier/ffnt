@@ -27,7 +27,7 @@ impl<const P: u64> Z64<P> {
     }
 
     pub const unsafe fn new_unchecked(z: u64) -> Self {
-        debug_assert!(z <= P);
+        debug_assert!(z < P);
         Self(z)
     }
 
