@@ -21,7 +21,7 @@ macro_rules! impl_traits {
 
                 impl<const P: [<u $z>]> Zero for [<Z $z>]<P> {
                     fn zero() -> Self {
-                        Self::new_unchecked(0)
+                        unsafe { Self::new_unchecked(0) }
                     }
 
                     fn is_zero(&self) -> bool {
@@ -31,7 +31,7 @@ macro_rules! impl_traits {
 
                 impl<const P: [<u $z>]> One for [<Z $z>]<P> {
                     fn one() -> Self {
-                        Self::new_unchecked(1)
+                        unsafe { Self::new_unchecked(1) }
                     }
 
                     fn is_one(&self) -> bool {
@@ -145,7 +145,7 @@ macro_rules! impl_powu {
                 type Output = Self;
 
                 fn pow(mut self, mut exp: $x) -> Self::Output {
-                    let mut res = Self::new_unchecked(1);
+                    let mut res = unsafe { Self::new_unchecked(1) };
                     while exp > 0 {
                         if exp & 1 != 0 {
                             res *= self
@@ -161,7 +161,7 @@ macro_rules! impl_powu {
                 type Output = Self;
 
                 fn pow(mut self, mut exp: $x) -> Self::Output {
-                    let mut res = Self::new_unchecked(1);
+                    let mut res = unsafe { Self::new_unchecked(1) };
                     while exp > 0 {
                         if exp & 1 != 0 {
                             res *= self

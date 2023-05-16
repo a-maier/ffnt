@@ -10,7 +10,8 @@ macro_rules! impl_rand {
             paste!{
                 impl<const P: [<u $z>]> Distribution<[<Z $z>]<P>> for Standard {
                     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> [<Z $z>]<P> {
-                        [<Z $z>]::new_unchecked(rng.gen_range(0..P))
+                        let num = rng.gen_range(0..P);
+                        unsafe { [<Z $z>]::new_unchecked(num) }
                     }
                 }
 
@@ -75,8 +76,8 @@ mod tests {
         let mut rng = rand_xoshiro::Xoshiro256StarStar::seed_from_u64(0);
 
         const P: u64 = PRIMES[2];
-        const MIN: Z64<P> = Z64::new_unchecked(7);
-        const MAX: Z64<P> = Z64::new_unchecked(153);
+        const MIN: Z64<P> = Z64::new(7);
+        const MAX: Z64<P> = Z64::new(153);
 
         for _ in 0..1000 {
             let z = rng.gen_range(MIN..MAX);

@@ -26,7 +26,7 @@ impl<const P: u64> Z64<P> {
         Self(res)
     }
 
-    pub const fn new_unchecked(z: u64) -> Self {
+    pub const unsafe fn new_unchecked(z: u64) -> Self {
         debug_assert!(z <= P);
         Self(z)
     }
@@ -76,7 +76,7 @@ impl<const P: u64> Z64<P> {
     }
 
     pub fn powu(mut self, mut exp: u64) -> Self {
-        let mut res = Self::new_unchecked(1);
+        let mut res = unsafe { Self::new_unchecked(1) };
         while exp > 0 {
             if exp & 1 != 0 {
                 res *= self
