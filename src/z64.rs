@@ -15,18 +15,18 @@ pub struct Z64<const P: u64>(u64);
 impl<const P: u64> Z64<P> {
     const INFO: Z64Info = Z64Info::new(P);
 
-    pub const MIN: Z64<P> = Self(0);
-    pub const MAX: Z64<P> = Self(P - 1);
+    pub const MIN: Z64<P> = unsafe { Self::new_unchecked(0) };
+    pub const MAX: Z64<P> = unsafe { Self::new_unchecked(P - 1) };
 
     pub const fn new(z: i64) -> Self {
         let res = remi(z, P, Self::info().red_struct);
         debug_assert!(res >= 0);
         let res = res as u64;
-        debug_assert!(res < P);
-        Self(res)
+        unsafe { Self::new_unchecked(res) }
     }
 
     pub const unsafe fn new_unchecked(z: u64) -> Self {
+        assert!(P > 0);
         debug_assert!(z < P);
         Self(z)
     }
@@ -41,14 +41,14 @@ impl<const P: u64> Z64<P> {
             return None;
         }
         let s = res.bezout[0];
-        Some(Self(
-            if s < 0 {
-                debug_assert!(s + Self::modulus() as i64 >= 0);
-                s + Self::modulus() as i64
-            } else {
-                s
-            } as u64
-        ))
+        let inv = if s < 0 {
+            debug_assert!(s + Self::modulus() as i64 >= 0);
+            s + Self::modulus() as i64
+        } else {
+            s
+        } as u64;
+        let inv = unsafe { Self::new_unchecked(inv) };
+        Some(inv)
     }
 
     pub const fn has_inv(&self) -> bool {
@@ -106,7 +106,8 @@ impl<const P: u64> From<Z64<P>> for i64 {
 
 impl<const P: u64> From<u64> for Z64<P> {
     fn from(u: u64) -> Self {
-        Self(remu(u, Self::modulus(), Self::info().red_struct) as u64)
+        let num = remu(u, Self::modulus(), Self::info().red_struct) as u64;
+        unsafe { Self::new_unchecked(num) }
     }
 }
 
@@ -213,8 +214,7 @@ impl<const P: u64> Add for Z64<P> {
         let res = correct_excess((self.0 + rhs.0) as i64, Self::modulus());
         debug_assert!(res >= 0);
         let res = res as u64;
-        debug_assert!(res < Self::modulus());
-        Self(res)
+        unsafe { Self::new_unchecked(res) }
     }
 }
 
@@ -250,8 +250,7 @@ impl<const P: u64> Sub for Z64<P> {
             correct_deficit(self.0 as i64 - rhs.0 as i64, Self::modulus());
         debug_assert!(res >= 0);
         let res = res as u64;
-        debug_assert!(res < Self::modulus());
-        Self(res)
+        unsafe { Self::new_unchecked(res) }
     }
 }
 
@@ -291,7 +290,8 @@ impl<const P: u64> Mul for Z64<P> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Self(mul_mod(self.0, rhs.0, Self::modulus(), Self::modulus_inv()))
+        let num = mul_mod(self.0, rhs.0, Self::modulus(), Self::modulus_inv());
+        unsafe { Self::new_unchecked(num) }
     }
 }
 

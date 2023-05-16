@@ -18,18 +18,19 @@ pub struct Z32<const P: u32>(u32);
 impl<const P: u32> Z32<P> {
     const INFO: Z32Info = Z32Info::new(P);
 
-    pub const MIN: Z32<P> = Self(0);
-    pub const MAX: Z32<P> = Self(P - 1);
+    pub const MIN: Z32<P> = unsafe { Self::new_unchecked(0) };
+    pub const MAX: Z32<P> = unsafe { Self::new_unchecked(P - 1) };
 
     pub const fn new(z: i32) -> Self {
         let res = remi(z, P, Self::info().red_struct);
         debug_assert!(res >= 0);
         let res = res as u32;
         debug_assert!(res < P);
-        Self(res)
+        unsafe { Self::new_unchecked(res) }
     }
 
     pub const unsafe fn new_unchecked(z: u32) -> Self {
+        assert!(P > 0);
         debug_assert!(z < P);
         Self(z)
     }
@@ -44,14 +45,14 @@ impl<const P: u32> Z32<P> {
             return None;
         }
         let s = res.bezout[0];
-        Some(Self(
-            if s < 0 {
-                debug_assert!(s + Self::modulus() as i32 >= 0);
-                s + Self::modulus() as i32
-            } else {
-                s
-            } as u32
-        ))
+        let inv = if s < 0 {
+            debug_assert!(s + Self::modulus() as i32 >= 0);
+            s + Self::modulus() as i32
+        } else {
+            s
+        } as u32;
+        let inv = unsafe { Self::new_unchecked(inv) };
+        Some(inv)
     }
 
     pub const fn has_inv(&self) -> bool {
@@ -109,7 +110,8 @@ impl<const P: u32> From<Z32<P>> for i32 {
 
 impl<const P: u32> From<u32> for Z32<P> {
     fn from(u: u32) -> Self {
-        Self(remu(u, Self::modulus(), Self::info().red_struct) as u32)
+        let num = remu(u, Self::modulus(), Self::info().red_struct) as u32;
+        unsafe { Self::new_unchecked(num) }
     }
 }
 
@@ -204,8 +206,7 @@ impl<const P: u32> Add for Z32<P> {
         let res = correct_excess((self.0 + rhs.0) as i32, Self::modulus());
         debug_assert!(res >= 0);
         let res = res as u32;
-        debug_assert!(res < Self::modulus());
-        Self(res)
+        unsafe { Self::new_unchecked(res) }
     }
 }
 
@@ -241,8 +242,7 @@ impl<const P: u32> Sub for Z32<P> {
             correct_deficit(self.0 as i32 - rhs.0 as i32, Self::modulus());
         debug_assert!(res >= 0);
         let res = res as u32;
-        debug_assert!(res < Self::modulus());
-        Self(res)
+        unsafe { Self::new_unchecked(res) }
     }
 }
 
@@ -282,7 +282,8 @@ impl<const P: u32> Mul for Z32<P> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Self(mul_mod(self.0, rhs.0, Self::modulus(), Self::modulus_inv()))
+        let num = mul_mod(self.0, rhs.0, Self::modulus(), Self::modulus_inv());
+        unsafe { Self::new_unchecked(num) }
     }
 }
 
