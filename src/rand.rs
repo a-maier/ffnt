@@ -25,19 +25,24 @@ macro_rules! impl_rand {
                     where B1: SampleBorrow<Self::X> + Sized,
                           B2: SampleBorrow<Self::X> + Sized
                     {
-                        [<UniformZ $z>](UniformInt::<[<u $z>]>::new(low.borrow().0, high.borrow().0))
+                        [<UniformZ $z>](
+                            UniformInt::<[<u $z>]>::new(
+                                low.borrow().repr(),
+                                high.borrow().repr()
+                            )
+                        )
                     }
                     fn new_inclusive<B1, B2>(low: B1, high: B2) -> Self
                     where B1: SampleBorrow<Self::X> + Sized,
                           B2: SampleBorrow<Self::X> + Sized
                     {
                         [<UniformZ $z>](UniformInt::<[<u $z>]>::new_inclusive(
-                            low.borrow().0,
-                            high.borrow().0,
+                            low.borrow().repr(),
+                            high.borrow().repr(),
                         ))
                     }
                     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Self::X {
-                        [<Z $z>](self.0.sample(rng))
+                        unsafe { [<Z $z>]::new_unchecked(self.0.sample(rng)) }
                     }
                 }
 

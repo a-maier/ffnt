@@ -10,7 +10,7 @@ use std::{
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Z64<const P: u64>(pub(crate) u64);
+pub struct Z64<const P: u64>(u64);
 
 impl<const P: u64> Z64<P> {
     const INFO: Z64Info = Z64Info::new(P);
@@ -85,6 +85,10 @@ impl<const P: u64> Z64<P> {
             exp /= 2;
         }
         res
+    }
+
+    pub(crate) const fn repr(self) -> u64 {
+        self.0
     }
 }
 

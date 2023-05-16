@@ -13,7 +13,7 @@ use crate::z64::TryDiv;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Z32<const P: u32>(pub(crate) u32);
+pub struct Z32<const P: u32>(u32);
 
 impl<const P: u32> Z32<P> {
     const INFO: Z32Info = Z32Info::new(P);
@@ -88,6 +88,10 @@ impl<const P: u32> Z32<P> {
             exp /= 2;
         }
         res
+    }
+
+    pub(crate) const fn repr(self) -> u32 {
+        self.0
     }
 }
 

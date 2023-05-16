@@ -25,7 +25,7 @@ macro_rules! impl_traits {
                     }
 
                     fn is_zero(&self) -> bool {
-                        self.0.is_zero()
+                        self.repr().is_zero()
                     }
                 }
 
@@ -35,7 +35,7 @@ macro_rules! impl_traits {
                     }
 
                     fn is_one(&self) -> bool {
-                        self.0.is_one()
+                        self.repr().is_one()
                     }
                 }
 
@@ -202,13 +202,13 @@ macro_rules! impl_as_primitive {
             // is resolved
             impl<const P: u64> AsPrimitive<$x> for Z64<P> {
                 fn as_(self) -> $x {
-                    self.0 as $x
+                    self.repr() as $x
                 }
             }
 
             impl<const P: u32> AsPrimitive<$x> for Z32<P> {
                 fn as_(self) -> $x {
-                    self.0 as $x
+                    self.repr() as $x
                 }
             }
         )*
