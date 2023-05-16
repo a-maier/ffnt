@@ -11,11 +11,11 @@ macro_rules! impl_traits {
             paste!{
                 impl<const P: [<u $z>]> Bounded for [<Z $z>]<P> {
                     fn min_value() -> Self {
-                        Self::zero()
+                        Self::MIN
                     }
 
                     fn max_value() -> Self {
-                        Self::new_unchecked(P - 1)
+                        Self::MAX
                     }
                 }
 

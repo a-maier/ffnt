@@ -18,6 +18,9 @@ pub struct Z32<const P: u32>(pub(crate) u32);
 impl<const P: u32> Z32<P> {
     const INFO: Z32Info = Z32Info::new(P);
 
+    pub const MIN: Z32<P> = Self(0);
+    pub const MAX: Z32<P> = Self(P - 1);
+
     pub const fn new(z: i32) -> Self {
         let res = remi(z, P, Self::info().red_struct);
         debug_assert!(res >= 0);

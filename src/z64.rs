@@ -15,6 +15,9 @@ pub struct Z64<const P: u64>(pub(crate) u64);
 impl<const P: u64> Z64<P> {
     const INFO: Z64Info = Z64Info::new(P);
 
+    pub const MIN: Z64<P> = Self(0);
+    pub const MAX: Z64<P> = Self(P - 1);
+
     pub const fn new(z: i64) -> Self {
         let res = remi(z, P, Self::info().red_struct);
         debug_assert!(res >= 0);
