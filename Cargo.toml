@@ -1,6 +1,6 @@
 [package]
 name = "galois-fields"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 description = "Finite field arithmetic"
 authors = ["Andreas Maier <andreas.martin.maier@desy.de>"]
