@@ -29,6 +29,9 @@ impl<const P: u32> Z32<P> {
         unsafe { Self::new_unchecked(res) }
     }
 
+    /// # Safety
+    ///
+    /// The argument should be less than `P`
     pub const unsafe fn new_unchecked(z: u32) -> Self {
         assert!(P > 0);
         debug_assert!(z < P);
@@ -117,7 +120,7 @@ impl<const P: u32> From<u32> for Z32<P> {
 
 impl<const P: u32> From<i32> for Z32<P> {
     fn from(i: i32) -> Self {
-        Self::new(i as i32)
+        Self::new(i)
     }
 }
 

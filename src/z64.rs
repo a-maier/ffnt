@@ -25,6 +25,9 @@ impl<const P: u64> Z64<P> {
         unsafe { Self::new_unchecked(res) }
     }
 
+    /// # Safety
+    ///
+    /// The argument should be less than `P`
     pub const unsafe fn new_unchecked(z: u64) -> Self {
         assert!(P > 0);
         debug_assert!(z < P);
