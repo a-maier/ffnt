@@ -8,6 +8,7 @@ use std::{
     },
 };
 
+/// Element of a finite field with a 64 bit characteristic `P`
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Z64<const P: u64>(u64);
@@ -15,9 +16,14 @@ pub struct Z64<const P: u64>(u64);
 impl<const P: u64> Z64<P> {
     const INFO: Z64Info = Z64Info::new(P);
 
+    /// Minimum field element, i.e. 0
     pub const MIN: Z64<P> = unsafe { Self::new_unchecked(0) };
+    /// Maximum field element, i.e. `P - 1`
     pub const MAX: Z64<P> = unsafe { Self::new_unchecked(P - 1) };
 
+    /// Create a new field element corresponding to some integer
+    ///
+    /// The integer is reduced modulo the field characteristic `P`
     pub const fn new(z: i64) -> Self {
         let res = remi(z, P, Self::info().red_struct);
         debug_assert!(res >= 0);
@@ -25,6 +31,9 @@ impl<const P: u64> Z64<P> {
         unsafe { Self::new_unchecked(res) }
     }
 
+    /// Create a new field element corresponding to some integer
+    /// without modular reduction
+    ///
     /// # Safety
     ///
     /// The argument should be less than `P`
@@ -34,10 +43,18 @@ impl<const P: u64> Z64<P> {
         Self(z)
     }
 
+    /// The multiplicative inverse `1/z` of a field element `z`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `z` is not invertible. If the characteristic `P` is
+    /// a prime power this happens only if `z` is zero.
     pub fn inv(&self) -> Self {
         self.try_inv().expect("Number has no multiplicative inverse")
     }
 
+    /// The multiplicative inverse `1/z` of a field element `z` or
+    /// `None` if the inverse does not exist
     pub fn try_inv(&self) -> Option<Self> {
         let res = extended_gcd(self.0, Self::modulus());
         if res.gcd != 1 {
@@ -54,6 +71,10 @@ impl<const P: u64> Z64<P> {
         Some(inv)
     }
 
+    /// Check if a field element `z` has a multiplicative inverse `1/z`
+    ///
+    /// If you know that the characteristic is a prime it is usually
+    /// better to check if `z` is zero.
     pub const fn has_inv(&self) -> bool {
         gcd(self.0, Self::modulus()) == 1
     }
@@ -62,14 +83,17 @@ impl<const P: u64> Z64<P> {
         &Self::INFO
     }
 
+    /// The field characteristic `P`
     pub const fn modulus() -> u64 {
         P
     }
 
+    #[allow(missing_docs)]
     pub const fn modulus_inv() -> SpInverse64 {
         Self::info().p_inv
     }
 
+    /// `z` to some integer power `exp`
     pub fn powi(self, exp: i64) -> Self {
         if exp < 0 {
             self.powu((-exp) as u64).inv()
@@ -78,6 +102,7 @@ impl<const P: u64> Z64<P> {
         }
     }
 
+    /// `z` to some integer power `exp`
     pub fn powu(mut self, mut exp: u64) -> Self {
         let mut res = unsafe { Self::new_unchecked(1) };
         while exp > 0 {
@@ -90,6 +115,7 @@ impl<const P: u64> Z64<P> {
         res
     }
 
+    #[cfg(any(feature = "rand", feature = "num-traits"))]
     pub(crate) const fn repr(self) -> u64 {
         self.0
     }
@@ -570,6 +596,7 @@ const fn u64_sign_mask(i: u64) -> i64 {
     i64_sign_mask(i as i64)
 }
 
+#[allow(missing_docs)]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SpInverse64 {
     inv: u64,

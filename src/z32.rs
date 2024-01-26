@@ -11,6 +11,7 @@ use std::{
 
 use crate::z64::TryDiv;
 
+/// Element of a finite field with a 32 bit characteristic `P`
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Z32<const P: u32>(u32);
@@ -18,9 +19,14 @@ pub struct Z32<const P: u32>(u32);
 impl<const P: u32> Z32<P> {
     const INFO: Z32Info = Z32Info::new(P);
 
+    /// Minimum field element, i.e. 0
     pub const MIN: Z32<P> = unsafe { Self::new_unchecked(0) };
+    /// Maximum field element, i.e. `P - 1`
     pub const MAX: Z32<P> = unsafe { Self::new_unchecked(P - 1) };
 
+    /// Create a new field element corresponding to some integer
+    ///
+    /// The integer is reduced modulo the field characteristic `P`
     pub const fn new(z: i32) -> Self {
         let res = remi(z, P, Self::info().red_struct);
         debug_assert!(res >= 0);
@@ -29,6 +35,9 @@ impl<const P: u32> Z32<P> {
         unsafe { Self::new_unchecked(res) }
     }
 
+    /// Create a new field element corresponding to some integer
+    /// without modular reduction
+    ///
     /// # Safety
     ///
     /// The argument should be less than `P`
@@ -38,10 +47,18 @@ impl<const P: u32> Z32<P> {
         Self(z)
     }
 
+    /// The multiplicative inverse `1/z` of a field element `z`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `z` is not invertible. If the characteristic `P` is
+    /// a prime power this happens only if `z` is zero.
     pub fn inv(&self) -> Self {
         self.try_inv().expect("Number has no multiplicative inverse")
     }
 
+    /// The multiplicative inverse `1/z` of a field element `z` or
+    /// `None` if the inverse does not exist
     pub fn try_inv(&self) -> Option<Self> {
         let res = extended_gcd(self.0, Self::modulus());
         if res.gcd != 1 {
@@ -58,6 +75,10 @@ impl<const P: u32> Z32<P> {
         Some(inv)
     }
 
+    /// Check if a field element `z` has a multiplicative inverse `1/z`
+    ///
+    /// If you know that the characteristic is a prime it is usually
+    /// better to check if `z` is zero.
     pub const fn has_inv(&self) -> bool {
         gcd(self.0, Self::modulus()) == 1
     }
@@ -66,14 +87,17 @@ impl<const P: u32> Z32<P> {
         &Self::INFO
     }
 
+    /// The field characteristic `P`
     pub const fn modulus() -> u32 {
         P
     }
 
-    pub const fn modulus_inv() -> SpInverse64 {
+    #[allow(missing_docs)]
+    pub const fn modulus_inv() -> SpInverse32 {
         Self::info().p_inv
     }
 
+    /// `z` to some integer power `exp`
     pub fn powi(self, exp: i64) -> Self {
         if exp < 0 {
             self.powu((-exp) as u64).inv()
@@ -82,6 +106,7 @@ impl<const P: u32> Z32<P> {
         }
     }
 
+    /// `z` to some integer power `exp`
     pub fn powu(mut self, mut exp: u64) -> Self {
         let mut res = unsafe { Self::new_unchecked(1) };
         while exp > 0 {
@@ -94,6 +119,7 @@ impl<const P: u32> Z32<P> {
         res
     }
 
+    #[cfg(any(feature = "rand", feature = "num-traits"))]
     pub(crate) const fn repr(self) -> u32 {
         self.0
     }
@@ -323,7 +349,7 @@ impl<const P: u32> Div for Z32<P> {
     }
 }
 
-const fn mul_mod(a: u32, b: u32, n: u32, ninv: SpInverse64) -> u32 {
+const fn mul_mod(a: u32, b: u32, n: u32, ninv: SpInverse32) -> u32 {
     let res = normalised_mul_mod(
         a,
         (b as i32) << ninv.shamt,
@@ -474,7 +500,7 @@ const fn used_bits(z: u32) -> u32 {
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 struct Z32Info {
     p: u32,
-    p_inv: SpInverse64,
+    p_inv: SpInverse32,
     red_struct: ReduceStruct,
 }
 
@@ -493,10 +519,10 @@ impl Z32Info {
     }
 }
 
-const fn prep_mul_mod(p: u32) -> SpInverse64 {
+const fn prep_mul_mod(p: u32) -> SpInverse32 {
     let shamt = p.leading_zeros() - (u32::BITS - SP_NBITS);
     let inv = normalised_prep_mul_mod(p << shamt);
-    SpInverse64 { inv, shamt }
+    SpInverse32 { inv, shamt }
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -549,8 +575,9 @@ const fn u32_sign_mask(i: u32) -> i32 {
     i32_sign_mask(i as i32)
 }
 
+#[allow(missing_docs)]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct SpInverse64 {
+pub struct SpInverse32 {
     inv: u32,
     shamt: u32,
 }

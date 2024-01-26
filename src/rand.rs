@@ -15,6 +15,7 @@ macro_rules! impl_rand {
                     }
                 }
 
+                #[allow(missing_docs)]
                 #[derive(Clone, Copy, Debug)]
                 pub struct [<UniformZ $z>]<const P: [<u $z>]>(UniformInt<[<u $z>]>);
 

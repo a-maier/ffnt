@@ -2,11 +2,11 @@
 name = "ffnt"
 version = "0.5.0"
 edition = "2021"
-description = "Finite field arithmetic"
+description = "Finite fields for number theory"
 authors = ["Andreas Maier <andreas.martin.maier@desy.de>"]
 license = "GPL-3.0-or-later"
 readme = "Readme.md"
-keywords = []
+keywords = ["finite-fields", "number-theory"]
 categories = ["Mathematics"]
 
 [dependencies]
