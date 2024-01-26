@@ -36,7 +36,7 @@
 //! ```
 //!
 //! For more examples see [the examples
-//! directory](https://github.com/a-maier/ffnt/tree/main/examples).
+//! directory](https://github.com/a-maier/ffnt/tree/master/examples).
 //!
 //! # Features
 //!
