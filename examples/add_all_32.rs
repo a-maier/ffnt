@@ -1,4 +1,4 @@
-use galois_fields::Z32;
+use ffnt::Z32;
 
 use num_traits::identities::Zero;
 

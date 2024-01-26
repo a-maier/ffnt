@@ -1,6 +1,6 @@
 use std::iter::repeat;
 
-use galois_fields::Z64;
+use ffnt::Z64;
 
 use num_traits::identities::Zero;
 use rand::Rng;
