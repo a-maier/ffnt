@@ -7,7 +7,7 @@ authors = ["Andreas Maier <andreas.martin.maier@desy.de>"]
 license = "GPL-3.0-or-later"
 readme = "Readme.md"
 keywords = ["finite-fields", "number-theory"]
-categories = ["Mathematics"]
+categories = ["mathematics"]
 
 [dependencies]
 num-traits = { version = "0.2", optional = true }
