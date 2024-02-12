@@ -44,17 +44,17 @@
 //! - `num-traits`: [numeric traits](https://crates.io/crates/num-traits)
 //! - `serde`: [serialisation and deserialisation](https://crates.io/crates/serde)
 #![warn(missing_docs)]
-/// Fields with a 64 bit characteristic
-pub mod z64;
-/// Fields with a 32 bit characteristic
-pub mod z32;
 #[cfg(feature = "num-traits")]
 /// Numeric traits
 pub mod num_traits;
 #[cfg(feature = "rand")]
 /// Random field element generation
 pub mod rand;
+/// Fields with a 32 bit characteristic
+pub mod z32;
+/// Fields with a 64 bit characteristic
+pub mod z64;
 
 pub use z32::Z32;
-pub use z64::Z64;
 pub use z64::TryDiv;
+pub use z64::Z64;

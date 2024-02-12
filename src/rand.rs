@@ -1,8 +1,11 @@
 use crate::{Z32, Z64};
 
-use rand::distributions::{Distribution, Standard, uniform::{SampleBorrow, SampleUniform, UniformInt, UniformSampler}};
-use rand::Rng;
 use paste::paste;
+use rand::distributions::{
+    uniform::{SampleBorrow, SampleUniform, UniformInt, UniformSampler},
+    Distribution, Standard,
+};
+use rand::Rng;
 
 macro_rules! impl_rand {
     ( $($z:literal), *) => {
@@ -55,7 +58,7 @@ macro_rules! impl_rand {
     }
 }
 
-impl_rand!{32, 64}
+impl_rand! {32, 64}
 
 #[cfg(test)]
 mod tests {

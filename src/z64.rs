@@ -50,7 +50,8 @@ impl<const P: u64> Z64<P> {
     /// Panics if `z` is not invertible. If the characteristic `P` is
     /// a prime power this happens only if `z` is zero.
     pub fn inv(&self) -> Self {
-        self.try_inv().expect("Number has no multiplicative inverse")
+        self.try_inv()
+            .expect("Number has no multiplicative inverse")
     }
 
     /// The multiplicative inverse `1/z` of a field element `z` or

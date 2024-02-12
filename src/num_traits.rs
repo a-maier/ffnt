@@ -132,7 +132,7 @@ macro_rules! impl_traits {
     }
 }
 
-impl_traits!{32, 64}
+impl_traits! {32, 64}
 
 // TODO: code duplication with Self::powu
 macro_rules! impl_powu {
