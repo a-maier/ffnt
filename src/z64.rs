@@ -11,6 +11,7 @@ use std::{
 /// Element of a finite field with a 64 bit characteristic `P`
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(transparent)]
 pub struct Z64<const P: u64>(u64);
 
 impl<const P: u64> Z64<P> {

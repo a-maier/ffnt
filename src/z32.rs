@@ -14,6 +14,7 @@ use crate::z64::TryDiv;
 /// Element of a finite field with a 32 bit characteristic `P`
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(transparent)]
 pub struct Z32<const P: u32>(u32);
 
 impl<const P: u32> Z32<P> {
