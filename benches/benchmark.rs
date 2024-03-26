@@ -1,7 +1,7 @@
 // run with `cargo criterion --features rand,num-traits`
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 
-use galois_fields::{Z32, Z64};
+use ffnt::{Z32, Z64};
 use num_traits::Zero;
 use rand::{Rng, SeedableRng};
 
