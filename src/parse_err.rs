@@ -48,3 +48,5 @@ impl From<IntErrorKind> for ParseIntError {
         Self(source)
     }
 }
+
+impl std::error::Error for ParseIntError {}
