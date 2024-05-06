@@ -47,6 +47,7 @@
 #[cfg(feature = "num-traits")]
 /// Numeric traits
 pub mod num_traits;
+mod parse_err;
 #[cfg(feature = "rand")]
 /// Random field element generation
 pub mod rand;
@@ -58,3 +59,5 @@ pub mod z64;
 pub use z32::Z32;
 pub use z64::TryDiv;
 pub use z64::Z64;
+
+pub use parse_err::ParseIntError;

@@ -3,10 +3,14 @@ use serde::{Deserialize, Serialize};
 
 use std::{
     fmt::{self, Display},
+    num::IntErrorKind,
     ops::{
         Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
     },
+    str::FromStr,
 };
+
+use crate::ParseIntError;
 
 /// Element of a finite field with a 64 bit characteristic `P`
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -181,6 +185,20 @@ impl<const P: u64> From<i8> for Z64<P> {
 impl<const P: u64> From<u8> for Z64<P> {
     fn from(u: u8) -> Self {
         Self::from(u as u64)
+    }
+}
+
+impl<const P: u64> FromStr for Z64<P> {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let z = s.parse()?;
+        if z >= P {
+            return Err(IntErrorKind::PosOverflow.into());
+        }
+        // # Safety
+        // we just checked that z < P
+        Ok(unsafe { Self::new_unchecked(z) })
     }
 }
 
