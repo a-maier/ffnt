@@ -445,8 +445,7 @@ const fn normalised_mul_mod(a: u32, b: i32, n: u32, ninv: u32) -> i32 {
 
 const fn remu(z: u32, p: u32, red: ReduceStruct) -> i32 {
     let q = u64_mul_high(z, red.ninv);
-    let qp = q.wrapping_mul(p);
-    let r = z as i32 - qp as i32;
+    let r = (z - q.wrapping_mul(p)) as i32;
     correct_excess(r, p)
 }
 

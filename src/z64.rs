@@ -469,8 +469,7 @@ const fn normalised_mul_mod(a: u64, b: i64, n: u64, ninv: u64) -> i64 {
 
 const fn remu(z: u64, p: u64, red: ReduceStruct) -> i64 {
     let q = u128_mul_high(z, red.ninv);
-    let qp = q.wrapping_mul(p);
-    let r = z as i64 - qp as i64;
+    let r = (z - q.wrapping_mul(p)) as i64;
     correct_excess(r, p)
 }
 
@@ -988,4 +987,12 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn tst_from() {
+        const P: u64 = 1152921504606846883;
+        let z = 9723086427719839101u64;
+        assert_eq!(u64::from(Z64::<P>::from(z)), 499714390865064037u64);
+    }
+
 }
