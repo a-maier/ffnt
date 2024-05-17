@@ -1,6 +1,6 @@
 [package]
 name = "ffnt"
-version = "0.7.1"
+version = "0.7.2"
 edition = "2021"
 description = "Finite fields for number theory"
 authors = ["Andreas Maier <andreas.martin.maier@desy.de>"]
