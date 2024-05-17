@@ -14,7 +14,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! ffnt = "0.5"
+//! ffnt = "0.7"
 //! ```
 //!
 //! # Example
