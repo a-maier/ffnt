@@ -1,3 +1,8 @@
+0.7.2
+-----
+
+* Fixed an overflow in conversions from unsigned integers.
+
 0.7.0
 -----
 
